@@ -10,12 +10,12 @@ Orchestrate the work; do not write feature code yourself. Use `builder` for all
 edits. The standard of done is satisfied acceptance criteria, meaningful tests,
 reviewed code, green final checks, and intact CLAUDE.md invariants.
 
-This command and its agents ship together in the `sk` plugin, so the agents are
+This command and its agents ship together in the `ship` plugin, so the agents are
 registered under that namespace. When you spawn one, pass the namespaced
-`subagent_type` — `sk:builder`, `sk:reviewer-rigorous`, `sk:reviewer-architect`,
-`sk:reviewer-frontend`, `sk:reviewer-minimalist`, `sk:reviewer-security` — even
-where the steps below name them in short form (`builder`, `reviewer-…`). This one
-list is the only place tied to the plugin name; update it if the plugin is renamed.
+`subagent_type` — `ship:builder`, `ship:reviewer-rigorous`, `ship:reviewer-architect`,
+`ship:reviewer-frontend`, `ship:reviewer-minimalist`, `ship:reviewer-security` —
+even where the steps below name them in short form (`builder`, `reviewer-…`). This
+one list is the only place tied to the plugin name; update it if it is renamed.
 
 ## Delegation mode: foreground, always
 
@@ -51,7 +51,7 @@ If the argument is a working-tree document containing `## Steps`, use STEP MODE:
    so this status advances the plan only after the PR merges.
 
 Otherwise use GOAL MODE and treat the argument as one PR-sized unit. If it is not
-PR-sized, stop and recommend `/ship-plan`; do not silently run multiple milestones.
+PR-sized, stop and recommend `/ship:plan`; do not silently run multiple milestones.
 
 Restate the unit as a short, verifiable acceptance checklist. Carry the selected
 step's Notes as constraints, not as extra scope.
@@ -183,7 +183,7 @@ remaining attack paths; do not push or claim completion.
 After all blocking findings are cleared:
 
 1. Run the project's full verification gate. This step is toolchain-agnostic on
-   purpose — the project owns what "green" means, not `/ship`. Projects expose it
+   purpose — the project owns what "green" means, not `/ship:it`. Projects expose it
    as an executable `.claude/hooks/ship-verify.sh` at the repo root, invoked as
    `.claude/hooks/ship-verify.sh <BASELINE-base-ref>` (the base ref defaults to
    `origin/main`). It is the single source of truth for the project's full build,
@@ -203,7 +203,7 @@ After all blocking findings are cleared:
    fixed, warnings left, and preserved dirty paths.
 
 In STEP MODE, stop after this one step and tell the user to merge the PR before
-re-running `/ship <doc>` for the next step. In GOAL MODE, stop at the stated goal.
+re-running `/ship:it <doc>` for the next step. In GOAL MODE, stop at the stated goal.
 
 Hard stops: unrelated dirty work without explicit scope; inability to establish
 the intended diff; three unresolved correctness/specialist fix rounds; or two

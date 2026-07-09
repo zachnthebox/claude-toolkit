@@ -6,22 +6,22 @@ cloning it into your skills directory during environment setup.
 
 ## What's inside
 
-Plugin **`sk`** (a shipping kit). Plugin components are namespaced by the plugin
-name, so you invoke everything as `sk:…` — the name is kept short for exactly that
-reason.
+Plugin **`ship`**. Plugin components are namespaced by the plugin name, so you
+invoke everything as `ship:…` — a short, meaningful namespace that reads as a
+phrase with each command.
 
-- **Commands** — `/sk:ship` (build one safe unit with risk-routed review, fix
-  loops, and a final security gate) and `/sk:ship-plan` (draft a step-structured
-  spec doc that `/sk:ship` builds one shippable step at a time).
-- **Agents** — `sk:builder` (implements the work) and the reviewer panel:
-  `sk:reviewer-rigorous`, `sk:reviewer-architect`, `sk:reviewer-frontend`,
-  `sk:reviewer-minimalist`, `sk:reviewer-security`.
+- **Commands** — `/ship:it` (build one safe unit with risk-routed review, fix
+  loops, and a final security gate) and `/ship:plan` (draft a step-structured
+  spec doc that `/ship:it` builds one shippable step at a time).
+- **Agents** — `ship:builder` (implements the work) and the reviewer panel:
+  `ship:reviewer-rigorous`, `ship:reviewer-architect`, `ship:reviewer-frontend`,
+  `ship:reviewer-minimalist`, `ship:reviewer-security`.
 
 ## Install (headless / setup script)
 
 Clone this repo into your skills directory. Claude Code auto-discovers any folder
 under `~/.claude/skills/` that has a `.claude-plugin/plugin.json` and loads it as
-a full plugin (`sk@skills-dir`) — commands and agents included — on the next
+a full plugin (`ship@skills-dir`) — commands and agents included — on the next
 session. No interactive `/plugin` command required.
 
 ```bash
@@ -41,7 +41,7 @@ single-plugin install:
 
 ## Per-project setup: the verify gate
 
-`/sk:ship` is toolchain-agnostic. Its final build/lint/test gate does not assume
+`/ship:it` is toolchain-agnostic. Its final build/lint/test gate does not assume
 `npm` (or any tool) — instead it runs a script the project provides:
 
 ```text
@@ -49,7 +49,7 @@ single-plugin install:
 ```
 
 That script is the project's single source of truth for a full build, lint, and
-test run. A non-zero exit blocks the push and feeds `/sk:ship`'s builder/reviewer
+test run. A non-zero exit blocks the push and feeds `/ship:it`'s builder/reviewer
 fix loop. Copy-paste starting points live in [`examples/`](./examples):
 
 - [`examples/ship-verify.node.sh`](./examples/ship-verify.node.sh)
@@ -57,7 +57,7 @@ fix loop. Copy-paste starting points live in [`examples/`](./examples):
 - [`examples/ship-verify.rust.sh`](./examples/ship-verify.rust.sh)
 
 Drop one into `.claude/hooks/ship-verify.sh`, `chmod +x`, and adjust for the
-project. If a project has no such script, `/sk:ship` detects the conventional
+project. If a project has no such script, `/ship:it` detects the conventional
 command or asks rather than guessing a toolchain.
 
 ## Portability note
@@ -71,7 +71,7 @@ want to tune those references.
 ## Layout
 
 ```text
-.claude-plugin/plugin.json   # plugin manifest (name: sk)
-commands/                    # ship.md, ship-plan.md   (auto-discovered)
+.claude-plugin/plugin.json   # plugin manifest (name: ship)
+commands/                    # it.md, plan.md           (auto-discovered → /ship:it, /ship:plan)
 agents/                      # builder + reviewer-*     (auto-discovered)
 ```
