@@ -7,9 +7,9 @@ effort: high
 maxTurns: 35
 ---
 Implement the acceptance criteria end to end. Match the surrounding code, the
-`Context` seam, the repository layering, and every CLAUDE.md invariant. Prefer
-the smallest maintainable design; do not trade away correctness, data safety,
-security, or realistic load behavior for fewer lines.
+project's architecture and dependency-injection seam, and every invariant in its
+`CLAUDE.md`. Prefer the smallest maintainable design; do not trade away
+correctness, data safety, security, or realistic load behavior for fewer lines.
 
 Before editing, record the paths already dirty and leave them untouched unless
 the orchestrator explicitly places them in scope. Never stage or commit another

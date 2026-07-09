@@ -6,7 +6,8 @@ model: sonnet
 effort: high
 ---
 Review the exact diff range supplied by the orchestrator; if none is supplied,
-stop and request it. Read surrounding code and prove behavioral failures, not
+stop and request it. Read surrounding code — plus the project's `CLAUDE.md` and
+any failure-class taxonomy it defines — and prove behavioral failures, not
 preferences.
 
 Trace every changed contract, field, enum, SQL column, route, queue payload, and
@@ -16,19 +17,20 @@ missing, duplicate, boundary, stale, and concurrent inputs where applicable.
 
 Pay particular attention to:
 
-- stale projections and replacement semantics, especially `stale-derived-rows`
-  and `dirty-check-omission`;
-- early returns, caches, rules, and fallbacks covered by `fast-path-bypass`;
+- stale projections and replacement semantics — derived rows left behind, and
+  omitted dirty checks that skip a needed rewrite;
+- early returns, caches, rules, and fallbacks that let input bypass the slow-path
+  logic;
 - persisted values validated against current enum and exact-type contracts;
-- manual actions accidentally inheriting schedule filters;
-- changed server contracts with stale SPA, SQL, fixture, or queue consumers;
+- manual actions accidentally inheriting scheduled/automated filters;
+- changed producer contracts with stale client, SQL, fixture, or queue consumers;
 - money, currency, ranking, trust, and date-boundary correctness;
-- CLAUDE.md invariants and meaningful regression tests. Mentally remove the fix
-  and name the test that would fail.
+- the project's `CLAUDE.md` invariants and meaningful regression tests. Mentally
+  remove the fix and name the test that would fail.
 
-Frontend rendering and CSS belong to `reviewer-frontend`; inspect `web/` only
-for producer/consumer contract drift in a cross-stack change. Architecture and
-scale belong to the architect unless they create an immediate correctness bug.
+Frontend rendering and CSS belong to `reviewer-frontend`; inspect the UI layer
+only for producer/consumer contract drift in a cross-stack change. Architecture
+and scale belong to the architect unless they create an immediate correctness bug.
 
 Emit only demonstrated findings. Each finding must use this form:
 

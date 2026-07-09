@@ -12,7 +12,7 @@ Trace authentication and authorization order, cross-user ownership predicates,
 untrusted input to SQL/commands/templates/paths/URLs, secret and PII exposure,
 unsafe deserialization, SSRF/open redirects, CSRF origin comparison, dependency
 risk, resource bounds, destructive migrations, and CI/tool permissions. Enforce
-every CLAUDE.md security/data invariant.
+every security/data invariant in the project's `CLAUDE.md`.
 
 Do not flag a hypothetical merely because confirmation is absent. Read enough
 surrounding code to demonstrate the source → missing control → sink path.

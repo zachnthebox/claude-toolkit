@@ -61,8 +61,10 @@ step's Notes as constraints, not as extra scope.
 4. Record the literal `BASELINE` SHA after branch setup and before the builder.
    Keep the SHA in the orchestration notes; do not depend on a shell variable
    surviving another Bash call.
-5. Read `review-corpus/review-matrix.md`. It is the canonical reviewer routing
-   contract.
+5. If the project provides a reviewer-routing contract — a dedicated file such as
+   `review-corpus/review-matrix.md`, or a pointer in its `CLAUDE.md` — read it; it
+   is canonical and overrides the default routing in §2. Otherwise use the §2
+   default.
 
 ## 2. Build and classify risk
 
@@ -101,15 +103,16 @@ does not name a real commit on the branch:
 4. If all attempts stall, stop and report the unit as unbuilt — do not report
    completion, and do not silently move on to review with nothing to review.
 
-Classify the complete unit diff using changed paths plus the manifest. These
-bullets summarize the `review-corpus/review-matrix.md` "Reviewer routing" section
-read in §1.5, which is canonical if the two ever drift:
+Classify the complete unit diff using changed paths plus the manifest. If the
+project supplied a routing contract in §1.5, it is canonical and wins wherever the
+two differ. Otherwise this default routing applies:
 
 - `reviewer-rigorous`: always.
 - `reviewer-architect`: persistence/schema/migrations, queues/jobs, concurrency,
   caches/projections, runtime/dependencies, cross-layer contracts, DI boundaries,
   or substantial data-access changes.
-- `reviewer-frontend`: any `web/` change.
+- `reviewer-frontend`: any change to the project's frontend/UI code (e.g. a `web/`
+  directory or an app's view layer).
 - `reviewer-security` early: auth/authorization, user-owned data, routes/input,
   URLs/fetching, errors/secrets/PII, SQL/deserialization, destructive migrations,
   dependencies, CI/deploy, resource bounds, or permissions.
