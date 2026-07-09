@@ -1,11 +1,12 @@
 # claude-toolkit
 
-A personal [Claude Code](https://code.claude.com/docs) plugin marketplace so the
-same shipping workflow and reviewer panel can be installed across every project.
+A personal [Claude Code](https://code.claude.com/docs) plugin — the same
+shipping workflow and reviewer panel, installable across every project by
+cloning it into your skills directory during environment setup.
 
 ## What's inside
 
-One plugin, **shipkit**:
+Plugin **shipkit**:
 
 - **Commands** — `/ship` (build one safe unit with risk-routed review, fix loops,
   and a final security gate) and `/ship-plan` (draft a step-structured spec doc
@@ -14,17 +15,27 @@ One plugin, **shipkit**:
   `reviewer-rigorous`, `reviewer-architect`, `reviewer-frontend`,
   `reviewer-minimalist`, `reviewer-security`.
 
-## Install
+## Install (headless / setup script)
 
-In any project (or your user-level Claude Code config):
+Clone this repo into your skills directory. Claude Code auto-discovers any folder
+under `~/.claude/skills/` that has a `.claude-plugin/plugin.json` and loads it as
+a full plugin (`shipkit@skills-dir`) — commands and agents included — on the next
+session. No interactive `/plugin` command required.
 
-```text
-/plugin marketplace add zachnthebox/claude-toolkit
-/plugin install shipkit
+```bash
+git clone https://github.com/zachnthebox/claude-toolkit ~/.claude/skills/claude-toolkit
 ```
 
-Then `/ship`, `/ship-plan`, and the agents are available. Update later with
-`/plugin update shipkit`.
+Update later with a plain `git pull` in that directory.
+
+## Install (interactive, optional)
+
+If you prefer the plugin UI in a normal session, this repo also works as a
+single-plugin install:
+
+```text
+/plugin install zachnthebox/claude-toolkit
+```
 
 ## Portability note
 
@@ -33,15 +44,13 @@ some of its assumptions — the review routing references a `review-corpus/revie
 file, the final checks run `npm run build && npm run lint && npm test`, and the
 agents lean on that project's `Context` DI seam and `CLAUDE.md` invariants. They
 run anywhere, but for projects with a different build or layering you'll want to
-tune the `## 5. Finish once` checks in `ship.md` and the project-specific
+tune the `## 5. Finish once` checks in `commands/ship.md` and the project-specific
 references in the reviewer agents.
 
 ## Layout
 
 ```text
-.claude-plugin/marketplace.json   # marketplace manifest (lists the plugins)
-plugins/shipkit/
-  .claude-plugin/plugin.json       # plugin manifest
-  commands/                        # ship.md, ship-plan.md
-  agents/                          # builder + reviewer-*
+.claude-plugin/plugin.json   # plugin manifest (name: shipkit)
+commands/                    # ship.md, ship-plan.md   (auto-discovered)
+agents/                      # builder + reviewer-*     (auto-discovered)
 ```
