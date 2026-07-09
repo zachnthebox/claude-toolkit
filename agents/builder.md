@@ -21,9 +21,10 @@ new guard or branch, test its intent against empty, null, zero, missing,
 duplicate, boundary, and concurrent inputs where relevant. Every bug fix and
 review finding needs a regression test that fails without the fix.
 
-During iteration, run focused tests and the cheapest relevant build/lint check.
-The orchestrator owns the final full suite. If Markdown changes, run
-`npm run lint:md`. Commit only the scoped files when the focused checks pass.
+During iteration, run focused tests and the cheapest relevant build/lint check
+for the project's toolchain. The orchestrator owns the final full suite (the
+project's `.claude/hooks/ship-verify.sh`). Commit only the scoped files when the
+focused checks pass.
 
 When the task is one step from a `## Steps` spec doc: implement only that step,
 touch no later step, and as part of this step's commit flip its `Status:` line in

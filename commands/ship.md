@@ -172,15 +172,15 @@ remaining attack paths; do not push or claim completion.
 
 After all blocking findings are cleared:
 
-1. Run `npm run build && npm run lint && npm run lint:diff -- origin/main && npm test`.
-   `lint:diff` runs CI's own added-lines-only naming-floor gate locally — the same
-   `eslint.diff-only.config.js` config and the same `reviewdog` binary
-   `.github/workflows/ci.yml` invokes — so it only fails on violations the unit's
-   own diff introduces, and can't drift from what CI actually checks the way a
-   reimplementation could. Requires `reviewdog` on `PATH` (`go install
-   github.com/reviewdog/reviewdog/cmd/reviewdog@v0.21.0` if missing — see
-   `scripts/lint-diff.sh`'s error message). If Markdown changed, also run
-   `npm run lint:md`.
+1. Run the project's full verification gate. This step is toolchain-agnostic on
+   purpose — the project owns what "green" means, not `/ship`. Projects expose it
+   as an executable `.claude/hooks/ship-verify.sh` at the repo root, invoked as
+   `.claude/hooks/ship-verify.sh <BASELINE-base-ref>` (the base ref defaults to
+   `origin/main`). It is the single source of truth for the project's full build,
+   lint, and test run, whether that is `npm test`, `xcodebuild test`, `cargo test`,
+   or a mix. Run it and treat a non-zero exit as failure.
+   If the project has no such script, do not assume a toolchain (`npm`, etc.):
+   detect its conventional full build/lint/test command, or ask, before proceeding.
    Do not push on failure; send genuine code failures through the same scoped
    builder/reviewer loop.
 2. Confirm the final diff, commits, branch, and plan-step status. Confirm no

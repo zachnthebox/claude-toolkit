@@ -37,15 +37,33 @@ single-plugin install:
 /plugin install zachnthebox/claude-toolkit
 ```
 
+## Per-project setup: the verify gate
+
+`/ship` is toolchain-agnostic. Its final build/lint/test gate does not assume
+`npm` (or any tool) — instead it runs a script the project provides:
+
+```text
+.claude/hooks/ship-verify.sh <base-ref>   # base-ref defaults to origin/main
+```
+
+That script is the project's single source of truth for a full build, lint, and
+test run. A non-zero exit blocks the push and feeds `/ship`'s builder/reviewer
+fix loop. Add one per project:
+
+- **Node**: `npm run build && npm run lint && npm test`
+- **iOS**: `xcodebuild -scheme App test`
+- **Rust**: `cargo build && cargo clippy -- -D warnings && cargo test`
+
+If a project has no such script, `/ship` detects the conventional command or asks
+rather than guessing a toolchain.
+
 ## Portability note
 
-These commands and agents were extracted from a specific project and still carry
-some of its assumptions — the review routing references a `review-corpus/review-matrix.md`
-file, the final checks run `npm run build && npm run lint && npm test`, and the
-agents lean on that project's `Context` DI seam and `CLAUDE.md` invariants. They
-run anywhere, but for projects with a different build or layering you'll want to
-tune the `## 5. Finish once` checks in `commands/ship.md` and the project-specific
-references in the reviewer agents.
+The reviewer agents still carry some conventions from the project they were
+extracted from — the review routing references a `review-corpus/review-matrix.md`
+file, and the agents lean on that project's `Context` DI seam and `CLAUDE.md`
+invariants. They run anywhere, but for a project with different layering you'll
+want to tune those references.
 
 ## Layout
 
