@@ -48,14 +48,15 @@ single-plugin install:
 
 That script is the project's single source of truth for a full build, lint, and
 test run. A non-zero exit blocks the push and feeds `/ship`'s builder/reviewer
-fix loop. Add one per project:
+fix loop. Copy-paste starting points live in [`examples/`](./examples):
 
-- **Node**: `npm run build && npm run lint && npm test`
-- **iOS**: `xcodebuild -scheme App test`
-- **Rust**: `cargo build && cargo clippy -- -D warnings && cargo test`
+- [`examples/ship-verify.node.sh`](./examples/ship-verify.node.sh)
+- [`examples/ship-verify.ios.sh`](./examples/ship-verify.ios.sh)
+- [`examples/ship-verify.rust.sh`](./examples/ship-verify.rust.sh)
 
-If a project has no such script, `/ship` detects the conventional command or asks
-rather than guessing a toolchain.
+Drop one into `.claude/hooks/ship-verify.sh`, `chmod +x`, and adjust for the
+project. If a project has no such script, `/ship` detects the conventional
+command or asks rather than guessing a toolchain.
 
 ## Portability note
 
