@@ -1,0 +1,12 @@
+{
+  "name": "claude-toolkit",
+  "owner": {
+    "name": "zachnthebox"
+  },
+  "plugins": [
+    {
+      "source": "./plugins/shipkit",
+      "description": "The /ship and /ship-plan shipping workflow plus the builder and reviewer agent panel."
+    }
+  ]
+}
