@@ -1,6 +1,6 @@
 {
-  "name": "shipkit",
-  "description": "Risk-routed shipping workflow (/ship, /ship-plan) with a builder agent and a five-reviewer panel.",
+  "name": "sk",
+  "description": "Risk-routed shipping workflow (/sk:ship, /sk:ship-plan) with a builder agent and a five-reviewer panel.",
   "version": "0.1.0",
   "author": {
     "name": "zachnthebox"

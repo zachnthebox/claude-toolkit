@@ -10,6 +10,13 @@ Orchestrate the work; do not write feature code yourself. Use `builder` for all
 edits. The standard of done is satisfied acceptance criteria, meaningful tests,
 reviewed code, green final checks, and intact CLAUDE.md invariants.
 
+This command and its agents ship together in the `sk` plugin, so the agents are
+registered under that namespace. When you spawn one, pass the namespaced
+`subagent_type` — `sk:builder`, `sk:reviewer-rigorous`, `sk:reviewer-architect`,
+`sk:reviewer-frontend`, `sk:reviewer-minimalist`, `sk:reviewer-security` — even
+where the steps below name them in short form (`builder`, `reviewer-…`). This one
+list is the only place tied to the plugin name; update it if the plugin is renamed.
+
 ## Delegation mode: foreground, always
 
 Every `builder`/reviewer delegation below gates the very next instruction in
