@@ -202,6 +202,16 @@ After all blocking findings are cleared:
 4. Report the unit shipped, checks run, reviewers activated and why, blockers
    fixed, warnings left, and preserved dirty paths.
 
+Never rewrite commits you already made to satisfy a commit-identity or signature
+warning. Managed environments (e.g. Claude Code on the web) configure the
+committer identity and signing themselves, and often sign with a key the
+container cannot verify locally — so a local "Unverified" / no-signature reading
+(`git log --format=%G?` returning `N`) is a local verification gap, not a defect;
+the commits verify on the remote. Do not `git commit --amend --reset-author` or
+`git rebase --exec` to chase it, and never rewrite branch history while a spawned
+`builder` is still committing onto it (it changes every SHA, including that
+builder's base). Push as-is.
+
 In STEP MODE, stop after this one step and tell the user to merge the PR before
 re-running `/ship:it <doc>` for the next step. In GOAL MODE, stop at the stated goal.
 
