@@ -1,7 +1,7 @@
 {
   "name": "ship",
   "description": "Risk-routed shipping workflow (/ship:it, /ship:plan) with a builder agent and a five-reviewer panel.",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "author": {
     "name": "zachnthebox"
   }

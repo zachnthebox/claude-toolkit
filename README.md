@@ -62,11 +62,26 @@ command or asks rather than guessing a toolchain.
 
 ## Portability note
 
-The reviewer agents still carry some conventions from the project they were
-extracted from — the review routing references a `review-corpus/review-matrix.md`
-file, and the agents lean on that project's `Context` DI seam and `CLAUDE.md`
-invariants. They run anywhere, but for a project with different layering you'll
-want to tune those references.
+The agents are project-agnostic by contract. Each one derives the target
+project's conventions from whatever actually exists — `CLAUDE.md` and
+docs/ADRs when present, otherwise lint configs, tests, and the surrounding
+code — and degrades gracefully when a file is absent (a missing `CLAUDE.md`
+never blocks a run or weakens the security gate). Two optional per-project
+hooks sharpen them further:
+
+- **Reviewer routing** — `/ship:it` routes reviewers from the diff itself
+  (paths touched, contracts changed, new dependencies). A project can override
+  the default with its own routing contract (e.g.
+  `review-corpus/review-matrix.md`, or a pointer in its `CLAUDE.md`); no such
+  file is required.
+- **Invariants** — a project `CLAUDE.md` gives the builder and reviewers
+  explicit invariants to enforce; without one they hold the diff to the
+  conventions the code itself practices.
+
+All five reviewers share one output contract: findings as
+`[BLOCKER|WARNING][failure-class][confidence]` blocks, ending with a
+machine-parseable `VERDICT: PASS|BLOCK (N blockers, M warnings)` line that
+`/ship:it` routes on.
 
 ## Layout
 

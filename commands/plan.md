@@ -10,15 +10,18 @@ Produce a spec doc in `docs/` that `/ship:it` can drive **one independently-ship
 step at a time**. You are planning, not building — write no feature code.
 
 ## 1. Ground the plan in the codebase
-Before proposing steps, understand what exists. Read the project's `CLAUDE.md`,
-its `docs/` RFCs / decision log, and the code the feature touches (use the
-`Explore` or `Plan` subagent for a broad sweep if the surface is large). Its
-findings shape the steps you write next, so call it with `run_in_background:
-false` — backgrounding it hands continuation to a notification hop instead of the
-same turn, and a missed or delayed one leaves the run looking stalled until a
-human nudges it. The plan must fit the project's actual layering and
-dependency-injection seam and its security/data invariants (all per its
-`CLAUDE.md`) — note which invariants each step must preserve.
+Before proposing steps, understand what exists. Read the project's `CLAUDE.md`
+and its `docs/` RFCs / decision log when present — absence is normal — then the
+code the feature touches (use the `Explore` or `Plan` subagent for a broad sweep
+if the surface is large). Its findings shape the steps you write next, so call it
+with `run_in_background: false` — backgrounding it hands continuation to a
+notification hop instead of the same turn, and a missed or delayed one leaves the
+run looking stalled until a human nudges it. The plan must fit the project's
+actual layering — and its dependency seam where one exists (visible in how tests
+substitute fakes); don't invent one for a project without it — and preserve its
+security/data invariants, sourced from `CLAUDE.md` when present, otherwise from
+the conventions the code itself practices. Note which invariants each step must
+preserve.
 
 ## 2. Carve the work into shippable steps
 A step is the unit `/ship:it` builds, reviews, and merges as **one PR**. Good steps:
@@ -72,7 +75,7 @@ ship the next. Do not reorder steps after shipping starts.
 
 Keep it to those fields. Don't pre-list the files a step touches — the builder
 finds its own blast radius by grepping callers, a hand-maintained file list just
-rots and can anchor it to the wrong set. Don't restate CLAUDE.md invariants per
+rots and can anchor it to the wrong set. Don't restate project invariants per
 step either — the always-on correctness reviewer (`reviewer-rigorous`) and the
 final security gate enforce them on every diff, and `/ship:it` risk-routes the other
 specialists to the surfaces that need them. Acceptance is the spec; Notes is for

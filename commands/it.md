@@ -7,8 +7,10 @@ model: inherit
 Goal: $ARGUMENTS
 
 Orchestrate the work; do not write feature code yourself. Use `builder` for all
-edits. The standard of done is satisfied acceptance criteria, meaningful tests,
-reviewed code, green final checks, and intact CLAUDE.md invariants.
+edits — reviewers never edit files, and the builder never reviews its own diff.
+The standard of done is satisfied acceptance criteria, meaningful tests,
+reviewed code, green final checks, and the project's documented invariants
+intact (its `CLAUDE.md`, when it has one).
 
 This command and its agents ship together in the `ship` plugin, so the agents are
 registered under that namespace. When you spawn one, pass the namespaced
@@ -35,6 +37,30 @@ message, each still with `run_in_background: false`. Same-message tool calls
 run concurrently regardless of that flag, so this gets true parallelism while
 keeping every result synchronous — the run resumes once every reviewer in the
 batch has returned, in that same turn, with no notification hop to miss.
+
+## Subagents are stateless — pass everything, parse the reply
+
+Every `builder`/reviewer sees ONLY the delegation prompt you write: no
+conversation history, no files you read, no earlier agent's output. Restate in
+each prompt everything that agent needs.
+
+**Builder packet** — the acceptance checklist; constraints / step Notes;
+`INITIAL_DIRTY_PATHS`; on a fix round, the deduplicated findings; in STEP MODE,
+the plan doc path and selected step. The builder returns a `CHANGE MANIFEST`
+whose first line is `Status: committed <sha>` or `Status: blocked — <reason>`.
+
+**Reviewer packet** — the literal diff command with a SHA you resolved (e.g.
+`git diff <BASELINE>...HEAD` — never a shell variable, never "the current
+changes"); the acceptance checklist; the manifest fields relevant to that
+reviewer's lane; and the activated failure classes. A reviewer must never
+choose its own diff range.
+
+**Reviewer reply shape** — all five reviewers answer in one format: zero or
+more `[BLOCKER|WARNING][failure-class][confidence]` finding blocks, then a
+final line `VERDICT: PASS (0 blockers, M warnings)` or
+`VERDICT: BLOCK (N blockers, M warnings)`. Route on that last line; adjudicate
+each blocker on its evidence (§3), not the verdict alone.
+`reviewer-minimalist` is warning-only and always ends `VERDICT: PASS`.
 
 ## 0. Select exactly one unit
 
@@ -70,8 +96,9 @@ step's Notes as constraints, not as extra scope.
    surviving another Bash call.
 5. If the project provides a reviewer-routing contract — a dedicated file such as
    `review-corpus/review-matrix.md`, or a pointer in its `CLAUDE.md` — read it; it
-   is canonical and overrides the default routing in §2. Otherwise use the §2
-   default.
+   is canonical and overrides the default routing in §2. Absence is the normal
+   case: the §2 default derives routing from the diff itself and requires
+   nothing from the project. Never stall looking for a matrix.
 
 ## 2. Build and classify risk
 
@@ -82,6 +109,8 @@ final full suite.
 
 Verify after return:
 
+- The manifest's `Status:` line says `committed <sha>` and that SHA is a real
+  commit on the branch.
 - The commit exists and the intended diff is `git diff BASELINE...HEAD`.
 - Pre-existing dirty paths were preserved.
 - No out-of-scope file was committed.
@@ -90,11 +119,16 @@ Verify after return:
 
 ### If the builder produced no commit
 
-An `Agent` delegation can end without doing the work — a died mid-run, a
+An `Agent` delegation can end without doing the work — an agent died mid-run, a
 terminal API error, a manifest with no matching commit — and still return as
 "done." Never take agent completion alone as evidence of progress; check
 `git log BASELINE..HEAD` and the manifest's stated SHA yourself before trusting
 either.
+
+If the manifest says `Status: blocked — <reason>`, read the reason first: a
+missing or ambiguous input is yours to fix — repair the packet and re-delegate;
+a genuinely unbuildable acceptance criterion is a hard stop to report, not
+something to retry blind.
 
 If `git log BASELINE..HEAD` is empty (no new commit) or the returned manifest
 does not name a real commit on the branch:
@@ -118,8 +152,10 @@ two differ. Otherwise this default routing applies:
 - `reviewer-architect`: persistence/schema/migrations, queues/jobs, concurrency,
   caches/projections, runtime/dependencies, cross-layer contracts, DI boundaries,
   or substantial data-access changes.
-- `reviewer-frontend`: any change to the project's frontend/UI code (e.g. a `web/`
-  directory or an app's view layer).
+- `reviewer-frontend`: any change to the project's web-frontend code — detect it
+  from the diff (directories like `web/`, `frontend/`, `client/`, an app's view
+  layer, or component/style/markup files). Projects with no web frontend never
+  route here.
 - `reviewer-security` early: auth/authorization, user-owned data, routes/input,
   URLs/fetching, errors/secrets/PII, SQL/deserialization, destructive migrations,
   dependencies, CI/deploy, resource bounds, or permissions.
@@ -133,12 +169,14 @@ range.
 
 ## 3. Adjudicate and fix
 
-A finding blocks only when it is marked `BLOCKER` and contains a concrete code
-path, observable failure/attack, complete fix, and proof requirement. Evidence,
-not reviewer votes, determines severity. Merge duplicate class + location
-findings before sending them to the builder. Warnings and minimalist findings are
-reported but do not block unless their evidence independently proves acceptance
-criteria are unmet.
+Parse each reviewer's final `VERDICT:` line to see who blocked. A finding
+blocks only when it is marked `BLOCKER` and contains a concrete code path,
+observable failure/attack, complete fix, and proof requirement — evidence, not
+reviewer votes or verdict lines, determines severity; downgrade a blocker whose
+evidence doesn't hold. Merge duplicate class + location findings before sending
+them to the builder. Warnings — including every minimalist finding, which are
+warning-only by contract — are reported to the user but block only if their
+evidence independently proves an acceptance criterion unmet.
 
 For each blocking fix batch:
 
@@ -167,7 +205,7 @@ Run `reviewer-security` on the complete PR diff:
 `git diff origin/main...HEAD`. This intentionally includes commits that predate
 the current unit but will merge in the PR.
 
-If the gate blocks:
+If its final line is `VERDICT: BLOCK (…)`:
 
 1. Record HEAD as `SECURITY_FIX_BASE`.
 2. Send the demonstrated blockers to `builder`; require tests and a commit.
