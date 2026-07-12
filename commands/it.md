@@ -1,7 +1,7 @@
 ---
 description: Build one safe unit with risk-routed review, fix loops, and a final security gate
 argument-hint: [goal, or path to a spec doc with a "## Steps" section]
-allowed-tools: Read, Grep, Glob, Bash, Agent
+allowed-tools: Read, Grep, Glob, Bash, Agent, Workflow
 model: inherit
 # This command commits, pushes, and opens PRs — deploy-class side effects.
 # Only the user decides when to ship; Claude must never auto-invoke it.
@@ -34,12 +34,84 @@ arrives, the run reads as "stopped" rather than "waiting on an agent" — a huma
 has to notice and nudge it to continue. Running in the foreground makes the
 wait synchronous and visible in the same turn instead.
 
-When a step calls for parallel reviewers (§2, §3.4, §4), issue every
-reviewer's `Agent` call as its own tool-use block within the *same* assistant
-message, each still with `run_in_background: false`. Same-message tool calls
-run concurrently regardless of that flag, so this gets true parallelism while
-keeping every result synchronous — the run resumes once every reviewer in the
-batch has returned, in that same turn, with no notification hop to miss.
+This applies to the serial delegations: the builder, and the single §4
+security-gate run. When a step calls for parallel reviewers (§2, §3.4, §4.3),
+use the batch mechanism in the next section instead.
+
+## Parallel review batches: prefer the Workflow tool
+
+When a step calls for a parallel reviewer batch, check whether the `Workflow`
+tool is available in this session. If it is, run the batch as ONE workflow
+call instead of separate `Agent` calls. This moves death handling out of
+orchestrator memory and into deterministic script code: each reviewer gets one
+in-script retry, verdicts are schema-forced (a died reviewer cannot produce
+one), and the whole batch returns as a single synchronous-looking result with
+one completion notification instead of one per reviewer.
+
+Use exactly this script, passing the reviewer packets via `args` — do not
+restructure it; everything run-specific travels in `args`:
+
+```js
+export const meta = {
+  name: 'ship-review-round',
+  description: 'One parallel reviewer batch: schema-forced verdicts, in-script retry',
+  phases: [{ title: 'Review' }],
+}
+const REVIEW = {
+  type: 'object',
+  required: ['verdict', 'blockers', 'warnings', 'findings'],
+  properties: {
+    verdict: { type: 'string', enum: ['PASS', 'BLOCK'] },
+    blockers: { type: 'number' },
+    warnings: { type: 'number' },
+    findings: { type: 'array', items: { type: 'object',
+      required: ['severity', 'failure_class', 'confidence', 'location',
+                 'evidence', 'failure', 'fix', 'proof'],
+      properties: {
+        severity: { type: 'string', enum: ['BLOCKER', 'WARNING'] },
+        failure_class: { type: 'string' },
+        confidence: { type: 'string', enum: ['high', 'medium'] },
+        location: { type: 'string' },
+        evidence: { type: 'string' },
+        failure: { type: 'string' },
+        fix: { type: 'string' },
+        proof: { type: 'string' },
+      } } },
+  },
+}
+phase('Review')
+return await parallel(args.map(r => async () => {
+  const opts = { agentType: r.type, label: r.type, schema: REVIEW,
+                 model: r.model, effort: r.effort }
+  let v = await agent(r.packet, opts)
+  if (!v) v = await agent(
+    `${r.packet}\n\nNote: a prior attempt died mid-run; this is a fresh retry.`,
+    { ...opts, label: `${r.type}:retry` })
+  return { reviewer: r.type, result: v }
+}))
+```
+
+Call it with `args` as the array of activated reviewers, one entry per
+reviewer:
+`{ "type": "ship:reviewer-rigorous", "model": "sonnet", "effort": "high",
+"packet": "<the full reviewer packet>" }` — as a real JSON array, not a
+string. Take `model`/`effort` from each agent file's frontmatter so workflow
+mode preserves the per-role pins. The schema mirrors the text block format
+one-to-one (`verdict`/`blockers`/`warnings` are the `VERDICT:` line; each
+finding carries the same six fields), so §3 adjudication is unchanged —
+evidence decides, not the verdict.
+
+Results return in `args` order. An entry whose `result` is null is a reviewer
+that died twice (its retry already ran in-script): hard-stop the run per the
+fail-closed rule — never adjudicate around it, never infer PASS.
+
+If the `Workflow` tool is NOT available, fall back to same-message `Agent`
+calls: issue every reviewer's call as its own tool-use block within the *same*
+assistant message, each with `run_in_background: false`. Same-message tool
+calls run concurrently regardless of that flag, so this keeps true parallelism
+with every result synchronous, and the fail-closed rule below applies to each
+reply individually. The builder and the single §4 security-gate run are serial
+delegations either way — always foreground `Agent` calls, never a workflow.
 
 ## Subagents are stateless — pass everything, parse the reply
 
@@ -73,7 +145,9 @@ it returns; on an invalid or errored reply, re-spawn that agent once with the
 same packet plus a one-line note about the failed attempt; if the retry is
 also invalid, hard-stop the run and report which agent could not complete.
 Never infer a PASS from silence — above all for the security gate — and never
-adjudicate findings from a reply whose verdict line is missing.
+adjudicate findings from a reply whose verdict line is missing. (Workflow-mode
+batches enforce this mechanically: the schema replaces the verdict-line check
+and the single retry runs in-script; a null result is a double death.)
 
 ## 0. Select exactly one unit
 
@@ -178,10 +252,10 @@ two differ. Otherwise this default routing applies:
 - `reviewer-minimalist`: new dependency, abstraction, configuration surface,
   module/layer, or substantial new code. Run it once per unit, not every round.
 
-Run the activated reviewers in parallel. Give each the literal command
-`git diff <BASELINE>...HEAD`, the acceptance checklist, relevant manifest fields,
-and the activated failure classes. A reviewer must never choose its own diff
-range.
+Run the activated reviewers in parallel as one batch (see "Parallel review
+batches" above). Give each the literal command `git diff <BASELINE>...HEAD`,
+the acceptance checklist, relevant manifest fields, and the activated failure
+classes. A reviewer must never choose its own diff range.
 
 ## 3. Adjudicate and fix
 
