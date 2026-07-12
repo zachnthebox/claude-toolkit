@@ -35,6 +35,14 @@ A step is the unit `/ship:it` builds, reviews, and merges as **one PR**. Good st
 - **Right-sized** — apply YAGNI. Don't add steps for scale the system won't reach;
   mark genuinely-deferred work as a later step or a "Non-goals" note, not step 1.
 
+Default to the **fewest steps that work**. Every step costs a full
+build/review/merge cycle, so start from "can this be one step?" and add a step
+only when something forces the split: a hard merge dependency (schema before
+backfill), a risk boundary worth isolating behind its own review, or a PR too
+large to review meaningfully. Never split by layer or file type — "models, then
+services, then UI" is one step, not three. A step you can't justify splitting
+gets merged into its neighbor.
+
 ## 3. Write the doc
 Markdown hygiene so the doc lands clean (many repos lint Markdown in CI): tag
 every fenced code block with a language (` ```markdown `, ` ```ts `, ` ```bash `),
@@ -82,8 +90,8 @@ specialists to the surfaces that need them. Acceptance is the spec; Notes is for
 the rare thing it can't express.
 
 ## 4. Hand off
-Report the step list (titles + one-line rationale for the ordering) and the doc
-path. Do not start building — tell the user to run `/ship:it docs/<slug>.md` to ship
+Report the step list (titles, a one-line rationale for the ordering, and — for
+any plan with more than one step — what forces each split) and the doc path. Do not start building — tell the user to run `/ship:it docs/<slug>.md` to ship
 step 1, then merge to advance. The doc does **not** need to be committed or merged
 first: `/ship:it` reads the plan from the working tree, and step 1's PR is what lands
 this doc on `main` (with step 1 flipped to `shipped`). If the codebase research

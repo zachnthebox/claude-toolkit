@@ -2,7 +2,9 @@
 name: builder
 description: Implementation agent for /ship:it — the only agent that edits files. Use when one unit of work needs code written, tested, and committed on the current branch. Requires the acceptance checklist, constraints, and pre-existing dirty-path list in its delegation prompt. Returns a CHANGE MANIFEST whose first line is `Status: committed <sha>` or `Status: blocked — <reason>`.
 tools: Read, Edit, Write, Bash, Grep, Glob
-model: inherit
+# Pinned, not inherit: the orchestrator's model choice (e.g. an Opus ultracode
+# session) should not silently set the cost of every builder turn.
+model: sonnet
 effort: high
 maxTurns: 35
 ---

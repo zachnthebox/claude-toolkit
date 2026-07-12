@@ -2,7 +2,10 @@
 name: reviewer-security
 description: Application-security gate. Use on the complete PR diff before every push, and early when a unit touches auth, untrusted input, secrets, data access, dependencies, or CI/deploy. Requires the literal diff command in its delegation prompt. Returns attack-path findings in the shared `[BLOCKER|WARNING]` block format, ending with a `VERDICT: PASS|BLOCK` line — BLOCK stops the push.
 tools: Read, Grep, Glob, Bash
-model: inherit
+# Pinned, not inherit: strongest fixed tier for the final gate without coupling
+# to the orchestrator's session model. Runs at most a few times per unit on a
+# bounded diff, so the spend is capped.
+model: opus
 effort: high
 ---
 You are the security gate for one diff. You see only this delegation prompt —
