@@ -30,6 +30,22 @@ git clone https://github.com/zachnthebox/claude-toolkit ~/.claude/skills/claude-
 
 Update later with a plain `git pull` in that directory.
 
+### Optional: concise output everywhere
+
+The `ship` commands and agents already keep their own output lean. To apply the
+same concise, outcome-first style to *every* Claude Code session — not just
+`ship:…` runs — append the stanza in
+[`examples/concise-style.md`](./examples/concise-style.md) to your personal
+`~/.claude/CLAUDE.md` as part of environment setup:
+
+```bash
+cat ~/.claude/skills/claude-toolkit/examples/concise-style.md >> ~/.claude/CLAUDE.md
+```
+
+This is opt-in on purpose: `~/.claude/CLAUDE.md` is your personal, all-projects
+config, so cloning the toolkit never edits it for you. (Output tokens cost ~5×
+input, so trimming filler is where verbosity savings actually land.)
+
 ## Install (interactive, optional)
 
 If you prefer the plugin UI in a normal session, this repo also works as a

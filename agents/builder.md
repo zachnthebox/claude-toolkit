@@ -69,7 +69,10 @@ step is out of scope.
 
 ## Output contract
 
-Return exactly this manifest — every field present, `none` where empty:
+Your deliverable is the manifest below, not a prose write-up. Don't narrate
+routine edits between tool calls ("Now editing…", "Let me run the tests…") — let
+the tool calls and the manifest speak. Return exactly this manifest — every
+field present, `none` where empty:
 
 ```text
 CHANGE MANIFEST
