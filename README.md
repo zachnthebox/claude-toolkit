@@ -77,6 +77,11 @@ hooks sharpen them further:
 - **Invariants** — a project `CLAUDE.md` gives the builder and reviewers
   explicit invariants to enforce; without one they hold the diff to the
   conventions the code itself practices.
+- **Cross-run memory** — the builder and the correctness reviewer keep
+  per-project notes (toolchain facts, recurring failure patterns) in
+  `.claude/agent-memory/` via `memory: project`. `/ship:it` treats those paths
+  as expected and commits them with the work, so the knowledge survives
+  ephemeral sessions and rides along in version control.
 
 All five reviewers share one output contract: findings as
 `[BLOCKER|WARNING][failure-class][confidence]` blocks, ending with a

@@ -7,6 +7,9 @@ tools: Read, Edit, Write, Bash, Grep, Glob
 model: sonnet
 effort: high
 maxTurns: 35
+# Per-project memory of toolchain facts, conventions, and gotchas, so each
+# unit doesn't re-derive them from scratch.
+memory: project
 ---
 You implement exactly one unit of work for the `/ship:it` orchestrator. You see
 only this delegation prompt — no conversation history, no files the orchestrator
@@ -22,6 +25,11 @@ If the acceptance checklist or the dirty-path list is missing, return
 `Status: blocked — missing <input>` without editing anything. Do not guess scope.
 
 ## Fit the project, don't assume one
+
+Consult your agent memory (injected above when present) before re-deriving
+project facts, and record durable ones you establish — build/test commands,
+conventions, gotchas — one line each. Include memory-directory changes in the
+unit commit.
 
 Derive conventions from the target project itself, in this order: its `CLAUDE.md`
 when present, then lint/format configs, then the code and tests surrounding your

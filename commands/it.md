@@ -92,8 +92,10 @@ step's Notes as constraints, not as extra scope.
 2. Never build or commit on `main` or detached HEAD. Create a goal-derived
    `claude/<slug>` branch before continuing when needed.
 3. Record `INITIAL_DIRTY_PATHS`. In STEP MODE the uncommitted plan document is
-   expected. Any other dirty path must be explicitly included by the user or the
-   run stops with the path list. Never absorb unrelated work.
+   expected. `.claude/agent-memory/**` is always expected dirt — the builder and
+   rigorous reviewer maintain per-project memory there (`memory: project`). Any
+   other dirty path must be explicitly included by the user or the run stops
+   with the path list. Never absorb unrelated work.
 4. Record the literal `BASELINE` SHA after branch setup and before the builder.
    Keep the SHA in the orchestration notes; do not depend on a shell variable
    surviving another Bash call.
@@ -116,7 +118,8 @@ Verify after return:
   commit on the branch.
 - The commit exists and the intended diff is `git diff BASELINE...HEAD`.
 - Pre-existing dirty paths were preserved.
-- No out-of-scope file was committed.
+- No out-of-scope file was committed (`.claude/agent-memory/**` updates are in
+  scope by default).
 - The manifest names changed contracts, persistence/derived data, trust
   boundaries, new mechanisms, callers, and tests.
 
@@ -238,7 +241,10 @@ After all blocking findings are cleared:
    Do not push on failure; send genuine code failures through the same scoped
    builder/reviewer loop.
 2. Confirm the final diff, commits, branch, and plan-step status. Confirm no
-   pre-existing dirty path was staged or committed.
+   pre-existing dirty path was staged or committed. If `.claude/agent-memory/**`
+   files are dirty (reviewer memory written during review), commit them now as a
+   separate chore commit — sessions may run in ephemeral containers, so
+   uncommitted agent memory is lost.
 3. Push the branch. The whole build/review/fix loop ran locally, so the branch
    reaches the remote only once it is green — nothing half-built is pushed. If no
    PR exists, open one ready for review now. If a PR already exists, update it only
