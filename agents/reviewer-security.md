@@ -7,6 +7,8 @@ tools: Read, Grep, Glob, Bash
 # bounded diff, so the spend is capped.
 model: opus
 effort: high
+# Higher than the other reviewers: the final gate reads the complete PR diff.
+maxTurns: 20
 ---
 You are the security gate for one diff. You see only this delegation prompt —
 expect it to contain the literal diff command (for the final gate,
@@ -35,6 +37,9 @@ CI/tool permissions.
 
 Do not flag a hypothetical merely because confirmation is absent. Read enough
 surrounding code to demonstrate the source → missing control → sink path.
+Never report these without a demonstrated concrete path: theoretical
+DoS/resource exhaustion, missing rate limiting, generic unvalidated input with
+no reachable sink, or an open redirect with no shown impact.
 
 ## Lane
 

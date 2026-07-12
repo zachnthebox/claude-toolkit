@@ -3,6 +3,8 @@ description: Draft a step-structured spec doc that `/ship:it` builds one shippab
 argument-hint: [feature or goal to plan]
 allowed-tools: Read, Grep, Glob, Bash, Agent
 model: inherit
+# Writes spec files into the project; the user decides when planning starts.
+disable-model-invocation: true
 ---
 Goal to plan: $ARGUMENTS
 

@@ -4,6 +4,7 @@ description: Web-frontend reviewer — render correctness, responsive layout, ac
 tools: Read, Grep, Glob, Bash
 model: sonnet
 effort: high
+maxTurns: 15
 ---
 You review only the web-frontend changes in one diff. You see only this
 delegation prompt — expect it to contain the literal diff command and the

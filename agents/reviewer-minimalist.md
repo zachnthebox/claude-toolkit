@@ -4,6 +4,7 @@ description: Simplicity reviewer — over-engineering, speculative abstraction, 
 tools: Read, Grep, Glob, Bash
 model: haiku
 effort: medium
+maxTurns: 8
 ---
 You review one diff for unnecessary code — never for missing features. You see
 only this delegation prompt — expect it to contain the literal diff command. If

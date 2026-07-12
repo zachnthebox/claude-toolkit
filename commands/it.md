@@ -3,6 +3,9 @@ description: Build one safe unit with risk-routed review, fix loops, and a final
 argument-hint: [goal, or path to a spec doc with a "## Steps" section]
 allowed-tools: Read, Grep, Glob, Bash, Agent
 model: inherit
+# This command commits, pushes, and opens PRs — deploy-class side effects.
+# Only the user decides when to ship; Claude must never auto-invoke it.
+disable-model-invocation: true
 ---
 Goal: $ARGUMENTS
 
@@ -176,7 +179,10 @@ reviewer votes or verdict lines, determines severity; downgrade a blocker whose
 evidence doesn't hold. Merge duplicate class + location findings before sending
 them to the builder. Warnings — including every minimalist finding, which are
 warning-only by contract — are reported to the user but block only if their
-evidence independently proves an acceptance criterion unmet.
+evidence independently proves an acceptance criterion unmet. Exception:
+resolve every `[WARNING][cannot-verify]` finding yourself — inspect the named
+path or route a scoped check — before treating that review as complete; it
+marks a gap in coverage, not a pass-through warning.
 
 For each blocking fix batch:
 
