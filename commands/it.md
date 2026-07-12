@@ -22,6 +22,15 @@ registered under that namespace. When you spawn one, pass the namespaced
 even where the steps below name them in short form (`builder`, `reviewer-…`). This
 one list is the only place tied to the plugin name; update it if it is renamed.
 
+## Communication style
+
+Keep the running narration lean. The progress the user wants stays — one line
+when you delegate a unit, route reviewers, or clear a blocker — but drop
+preamble and routine play-by-play ("Now I'll…", "Let me check…"). Lead with the
+outcome, not the steps you took to reach it. The §5 finish report is the
+deliverable; keep it complete. Terseness here is not silence: never trade away
+the visibility that lets the user follow what actually ran.
+
 ## Delegation mode: foreground, always
 
 Every `builder`/reviewer delegation below gates the very next instruction in
