@@ -6,7 +6,12 @@ tools: Read, Edit, Write, Bash, Grep, Glob
 # session) should not silently set the cost of every builder turn.
 model: sonnet
 effort: high
-maxTurns: 35
+# No maxTurns by design: builder work scales with the unit (large files, test
+# iteration), so a fixed cap truncates tractable work mid-flight — and turn
+# exhaustion returns no commit, which /ship:it reads as a stall (§2) and
+# re-delegates into the same wall. /ship:it already backstops runaways (no-commit
+# stall detection, capped re-delegation, hard stops), so a builder-side cap is
+# redundant here. Reviewers keep theirs: read-only, naturally bounded work.
 # Per-project memory of toolchain facts, conventions, and gotchas, so each
 # unit doesn't re-derive them from scratch.
 memory: project
