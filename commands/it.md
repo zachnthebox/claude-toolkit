@@ -17,10 +17,11 @@ intact (its `CLAUDE.md`, when it has one).
 
 This command and its agents ship together in the `ship` plugin, so the agents are
 registered under that namespace. When you spawn one, pass the namespaced
-`subagent_type` — `ship:builder`, `ship:reviewer-rigorous`, `ship:reviewer-architect`,
-`ship:reviewer-frontend`, `ship:reviewer-minimalist`, `ship:reviewer-security` —
-even where the steps below name them in short form (`builder`, `reviewer-…`). This
-one list is the only place tied to the plugin name; update it if it is renamed.
+`subagent_type` — `ship:builder`, `ship:recon`, `ship:reviewer-rigorous`,
+`ship:reviewer-architect`, `ship:reviewer-frontend`, `ship:reviewer-minimalist`,
+`ship:reviewer-security` — even where the steps below name them in short form
+(`builder`, `recon`, `reviewer-…`). This one list is the only place tied to the
+plugin name; update it if it is renamed.
 
 ## Communication style
 
@@ -43,7 +44,7 @@ arrives, the run reads as "stopped" rather than "waiting on an agent" — a huma
 has to notice and nudge it to continue. Running in the foreground makes the
 wait synchronous and visible in the same turn instead.
 
-When a step calls for parallel reviewers (§2, §3.4, §4), issue every
+When a step calls for parallel reviewers (§2, §3.5, §4), issue every
 reviewer's `Agent` call as its own tool-use block within the *same* assistant
 message, each still with `run_in_background: false`. Same-message tool calls
 run concurrently regardless of that flag, so this gets true parallelism while
@@ -57,9 +58,17 @@ conversation history, no files you read, no earlier agent's output. Restate in
 each prompt everything that agent needs.
 
 **Builder packet** — the acceptance checklist; constraints / step Notes;
-`INITIAL_DIRTY_PATHS`; on a fix round, the deduplicated findings; in STEP MODE,
-the plan doc path and selected step. The builder returns a `CHANGE MANIFEST`
-whose first line is `Status: committed <sha>` or `Status: blocked — <reason>`.
+`INITIAL_DIRTY_PATHS`; on a fix round, the deduplicated findings; when recon ran
+(§2, §3), its `RECON BRIEF` verbatim, with an instruction that the builder works
+from those anchors and does not re-read those files in full; in STEP MODE, the
+plan doc path and selected step. The builder returns a `CHANGE MANIFEST` whose
+first line is `Status: committed <sha>` or `Status: blocked — <reason>`.
+
+**Recon packet** — the target to locate (the acceptance checklist, or the
+deduplicated findings on a fix round) and any paths already known to be
+relevant. `recon` never edits and returns a `RECON BRIEF` of file:line anchors
+and bounded excerpts — never a full-file summary. Fold its brief into the next
+`builder` packet; do not make the builder re-derive what recon already found.
 
 **Reviewer packet** — the literal diff command with a SHA you resolved (e.g.
 `git diff <BASELINE>...HEAD` — never a shell variable, never "the current
@@ -126,10 +135,17 @@ step's Notes as constraints, not as extra scope.
 
 ## 2. Build and classify risk
 
-Delegate the acceptance checklist, constraints, `INITIAL_DIRTY_PATHS`, and any
-prior findings to `builder`. Require a commit and its `CHANGE MANIFEST`. The
-builder runs focused tests/checks during iteration; the orchestrator owns the
-final full suite.
+If the constraints/step Notes name specific files or modules, check their size
+(`wc -l` or equivalent). When any named file is large (roughly 300+ lines) or
+unfamiliar, run `recon` on it first, scoped to the acceptance checklist, and
+fold the `RECON BRIEF` into the builder packet. Skip recon when the unit's
+files are small or the target is greenfield — it exists to bound reads on
+large/unfamiliar code, not to run on every unit.
+
+Delegate the acceptance checklist, constraints, `INITIAL_DIRTY_PATHS`, any
+recon brief, and any prior findings to `builder`. Require a commit and its
+`CHANGE MANIFEST`. The builder runs focused tests/checks during iteration; the
+orchestrator owns the final full suite.
 
 Verify after return:
 
@@ -160,13 +176,17 @@ does not name a real commit on the branch:
 
 1. Treat this as a stall, not a failure of the unit — the acceptance checklist
    is unproven either way, not disproven.
-2. Re-delegate to a fresh `builder` call with the same acceptance checklist,
-   constraints, and `INITIAL_DIRTY_PATHS`, plus one line noting the prior
-   attempt returned without a commit so the retry doesn't repeat the same
-   dead end blind.
-3. Re-verify `git log BASELINE..HEAD` after each retry. Allow up to two retries
+2. A stall this early is itself evidence the builder spent its turns reading
+   instead of editing. Before re-delegating, run `recon` (if not already run
+   for this unit) scoped to the acceptance checklist and any files visible in
+   the stalled attempt's partial diff or manifest.
+3. Re-delegate to a fresh `builder` call with the same acceptance checklist,
+   constraints, and `INITIAL_DIRTY_PATHS`, plus the recon brief and one line
+   noting the prior attempt returned without a commit so the retry doesn't
+   repeat the same dead end blind.
+4. Re-verify `git log BASELINE..HEAD` after each retry. Allow up to two retries
    (three attempts total) before treating it as a hard stop.
-4. If all attempts stall, stop and report the unit as unbuilt — do not report
+5. If all attempts stall, stop and report the unit as unbuilt — do not report
    completion, and do not silently move on to review with nothing to review.
 
 Classify the complete unit diff using changed paths plus the manifest. If the
@@ -208,16 +228,20 @@ marks a gap in coverage, not a pass-through warning.
 
 For each blocking fix batch:
 
-1. Record HEAD's SHA as the fix baseline (`FIX_BASE`, used in step 4) before
+1. Record HEAD's SHA as the fix baseline (`FIX_BASE`, used in step 5) before
    delegating — a literal SHA in the orchestration notes, not a shell variable that
    another Bash call won't preserve (per §1.4).
-2. Send deduplicated findings to `builder`; require regression tests and a commit.
-3. Inspect the fix manifest and diff. If it adds a field, column, table, guard,
+2. Run `recon` scoped to the deduplicated findings — each already carries a
+   file:line location, so this is cheap. Fold the `RECON BRIEF` into the fix
+   packet so the builder starts from the exact site instead of re-finding it.
+3. Send the deduplicated findings and the recon brief to `builder`; require
+   regression tests and a commit.
+4. Inspect the fix manifest and diff. If it adds a field, column, table, guard,
    cache, optional value, stored flag, or dependency, re-run the routing matrix.
-4. Review `git diff <FIX_BASE>...HEAD` with the reviewer(s) that raised the
+5. Review `git diff <FIX_BASE>...HEAD` with the reviewer(s) that raised the
    blocker plus every newly activated specialist. Do not make the full panel
    rediscover the unchanged unit.
-5. Repeat for at most three blocking fix rounds.
+6. Repeat for at most three blocking fix rounds.
 
 After fixes, run `reviewer-rigorous` once on `git diff <BASELINE>...HEAD` if any
 fix commit was added after its last complete-unit review. This is the final

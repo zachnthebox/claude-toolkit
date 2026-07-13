@@ -13,9 +13,10 @@ phrase with each command.
 - **Commands** — `/ship:it` (build one safe unit with risk-routed review, fix
   loops, and a final security gate) and `/ship:plan` (draft a step-structured
   spec doc that `/ship:it` builds one shippable step at a time).
-- **Agents** — `ship:builder` (implements the work) and the reviewer panel:
-  `ship:reviewer-rigorous`, `ship:reviewer-architect`, `ship:reviewer-frontend`,
-  `ship:reviewer-minimalist`, `ship:reviewer-security`.
+- **Agents** — `ship:builder` (implements the work), `ship:recon` (read-only
+  scout that bounds the builder's reads on large/unfamiliar files), and the
+  reviewer panel: `ship:reviewer-rigorous`, `ship:reviewer-architect`,
+  `ship:reviewer-frontend`, `ship:reviewer-minimalist`, `ship:reviewer-security`.
 
 ## Install (headless / setup script)
 
@@ -109,5 +110,5 @@ machine-parseable `VERDICT: PASS|BLOCK (N blockers, M warnings)` line that
 ```text
 .claude-plugin/plugin.json   # plugin manifest (name: ship)
 commands/                    # it.md, plan.md           (auto-discovered → /ship:it, /ship:plan)
-agents/                      # builder + reviewer-*     (auto-discovered)
+agents/                      # builder + recon + reviewer-*  (auto-discovered)
 ```
