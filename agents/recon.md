@@ -2,7 +2,7 @@
 name: recon
 description: Read-only pathfinder for /ship:it. Given an acceptance checklist item, a review finding, or a named file/module, locates the exact file:line anchors and returns bounded excerpts — never a full-file summary. Use before delegating to `builder` when the unit's files are large or unfamiliar, or when a prior builder attempt already stalled re-reading them.
 tools: Read, Grep, Glob
-model: sonnet
+model: haiku
 effort: medium
 maxTurns: 12
 ---
