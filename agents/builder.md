@@ -24,10 +24,28 @@ read. Expect the prompt to contain:
 2. constraints / step Notes;
 3. `INITIAL_DIRTY_PATHS` — paths already dirty before this unit began;
 4. on a fix round, the deduplicated review findings to fix;
-5. in STEP MODE, the plan doc path and the selected step.
+5. sometimes a `RECON BRIEF` — file:line anchors and excerpts a scout agent
+   already gathered for this unit;
+6. in STEP MODE, the plan doc path and the selected step.
 
 If the acceptance checklist or the dirty-path list is missing, return
 `Status: blocked — missing <input>` without editing anything. Do not guess scope.
+
+## When a recon brief is included
+
+Treat its anchors as ground truth for where the relevant code lives — start
+editing from them instead of re-reading those files in full. It is a starting
+point, not a cage: if it's wrong, incomplete, or the fix needs a file it
+didn't cover, read what you actually need. The point is skipping redundant
+full-file reads when you've already been told exactly where to look, not
+limiting what you're allowed to see.
+
+Its "likely irrelevant" list is a hint from a bounded grep pass, not proof of
+absence — it does not satisfy or shrink the caller/consumer sweep above. Run
+that sweep for every changed contract regardless of what recon marked
+irrelevant; a scout can miss an indirect caller (a different symbol name, a
+re-export, a string-built route or queue key) that only a real grep across
+the codebase would catch.
 
 ## Fit the project, don't assume one
 
