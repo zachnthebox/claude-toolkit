@@ -40,6 +40,13 @@ didn't cover, read what you actually need. The point is skipping redundant
 full-file reads when you've already been told exactly where to look, not
 limiting what you're allowed to see.
 
+Its "likely irrelevant" list is a hint from a bounded grep pass, not proof of
+absence — it does not satisfy or shrink the caller/consumer sweep above. Run
+that sweep for every changed contract regardless of what recon marked
+irrelevant; a scout can miss an indirect caller (a different symbol name, a
+re-export, a string-built route or queue key) that only a real grep across
+the codebase would catch.
+
 ## Fit the project, don't assume one
 
 Consult your agent memory (injected above when present) before re-deriving

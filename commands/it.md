@@ -85,12 +85,19 @@ each blocker on its evidence (§3), not the verdict alone.
 
 **Fail closed on invalid replies** — agents die: mid-run errors, turn
 exhaustion, truncation. A reply with no final `VERDICT:` line is not a review,
-and a builder reply with no `Status:` line is not a build. Apply one uniform
-rule to every delegation: validate the reply against its contract the moment
-it returns; on an invalid or errored reply, re-spawn that agent once with the
-same packet plus a one-line note about the failed attempt; if the retry is
-also invalid, hard-stop the run and report which agent could not complete.
-Never infer a PASS from silence — above all for the security gate — and never
+a builder reply with no `Status:` line is not a build, and a recon reply that
+doesn't end with the literal `Open questions the builder still needs to
+resolve:` line is not a complete brief — recon's tight turn budget on
+large/unfamiliar files (the exact case it's invoked for) makes mid-write
+truncation the likeliest failure mode, and a truncated brief that still opens
+with `RECON BRIEF` would otherwise look valid. Apply one uniform rule to every
+delegation: validate the reply against its contract the moment it returns; on
+an invalid or errored reply, re-spawn that agent once with the same packet
+plus a one-line note about the failed attempt; if the retry is also invalid,
+hard-stop the run and report which agent could not complete. For recon
+specifically, a second invalid reply is not a hard stop — drop recon and
+delegate to `builder` without a brief, same as any unit where recon was never
+run. Never infer a PASS from silence — above all for the security gate — and never
 adjudicate findings from a reply whose verdict line is missing.
 
 ## 0. Select exactly one unit

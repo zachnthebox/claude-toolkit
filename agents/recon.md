@@ -15,6 +15,10 @@ orchestrator read. Expect it to contain the target (an acceptance checklist,
 review findings, or named files/modules) and, optionally, paths already known
 to be relevant.
 
+If the prompt gives no target to search for, do not guess a scope: return the
+brief below with no anchors and `Open questions the builder still needs to
+resolve: no target provided — nothing to search for`.
+
 ## How to search
 
 Use `Grep`/`Glob` to find the symbols, contracts, or call sites the target
@@ -37,7 +41,8 @@ Anchors:
   <the actual excerpt, only as much as is relevant>
   ```
 Existing helpers/patterns to reuse: ...
-Files confirmed irrelevant to the target (skip): ...
+Files scanned and likely irrelevant (unconfirmed, not a substitute for a
+caller/consumer grep): ...
 Open questions the builder still needs to resolve: none | <question>
 ```
 
@@ -45,3 +50,8 @@ Keep excerpts minimal — enough for the next agent to edit correctly without
 opening the file itself, not the surrounding scaffolding. If you cannot find
 something the target requires, say so under "Open questions" rather than
 guessing or padding the brief with a wider dump.
+
+Always end with the `Open questions the builder still needs to resolve:`
+line, verbatim, even when it's `none` — that line is the orchestrator's
+signal that this brief wasn't cut off mid-write. A reply that stops before it
+reads as truncated, not as "no open questions."
