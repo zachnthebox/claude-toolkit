@@ -225,8 +225,10 @@ Parse each reviewer's final `VERDICT:` line to see who blocked. A finding
 blocks only when it is marked `BLOCKER` and contains a concrete code path,
 observable failure/attack, complete fix, and proof requirement — evidence, not
 reviewer votes or verdict lines, determines severity; downgrade a blocker whose
-evidence doesn't hold. Merge duplicate class + location findings before sending
-them to the builder. Warnings — including every minimalist finding, which are
+evidence doesn't hold. Collect the entire panel's blockers into one
+deduplicated batch per round — merge duplicate class + location findings — so
+a single builder round-trip clears everything the round surfaced; never run
+sequential per-reviewer fix loops. Warnings — including every minimalist finding, which are
 warning-only by contract — are reported to the user but block only if their
 evidence independently proves an acceptance criterion unmet. Exception:
 resolve every `[WARNING][cannot-verify]` finding yourself — inspect the named
@@ -238,16 +240,24 @@ For each blocking fix batch:
 1. Record HEAD's SHA as the fix baseline (`FIX_BASE`, used in step 5) before
    delegating — a literal SHA in the orchestration notes, not a shell variable that
    another Bash call won't preserve (per §1.4).
-2. Run `recon` scoped to the deduplicated findings — each already carries a
-   file:line location, so this is cheap. Fold the `RECON BRIEF` into the fix
-   packet so the builder starts from the exact site instead of re-finding it.
+2. Run `recon` only when a finding lacks a concrete file:line anchor, or lands
+   in a large/unfamiliar file the builder has not already touched this unit.
+   Findings with precise anchors into files the builder just edited ARE the
+   brief — an extra recon hop there only adds a serial round-trip. When recon
+   does run, scope it to those findings and fold the `RECON BRIEF` into the
+   fix packet.
 3. Send the deduplicated findings and the recon brief to `builder`; require
    regression tests and a commit.
 4. Inspect the fix manifest and diff. If it adds a field, column, table, guard,
    cache, optional value, stored flag, or dependency, re-run the routing matrix.
 5. Review `git diff <FIX_BASE>...HEAD` with the reviewer(s) that raised the
    blocker plus every newly activated specialist. Do not make the full panel
-   rediscover the unchanged unit.
+   rediscover the unchanged unit. State each re-reviewer's scope in its
+   packet: verify the sent findings are fixed, and raise a new `BLOCKER` only
+   when it is anchored in this fix diff — a regression the fix introduced
+   elsewhere counts, with evidence. Code outside the fix diff was already
+   reviewed; re-blocking on it re-opens settled ground and is the main source
+   of round-trip ping-pong, so residual concerns there return as warnings.
 6. Repeat for at most three blocking fix rounds.
 
 After fixes, run `reviewer-rigorous` once on `git diff <BASELINE>...HEAD` if any
@@ -263,6 +273,15 @@ fix, and review before push. Do not infer a base with `HEAD~N`.
 Run `reviewer-security` on the complete PR diff:
 `git diff origin/main...HEAD`. This intentionally includes commits that predate
 the current unit but will merge in the PR.
+
+Skip this standalone run only when it would be an exact repeat of a review
+already in hand — all four must hold: security reviewed in the most recent
+review round (the §2 panel, or the last fix round); its verdict there was
+PASS; no commit has landed since; and `BASELINE` is the merge-base with
+`origin/main`, so the unit diff and the PR diff are the same range. When any
+condition is false — above all when the branch carries earlier commits
+security never saw — run the gate. Never infer a PASS from a skip whose
+conditions didn't hold.
 
 If its final line is `VERDICT: BLOCK (…)`:
 

@@ -11,8 +11,11 @@ invoke everything as `ship:…` — a short, meaningful namespace that reads as 
 phrase with each command.
 
 - **Commands** — `/ship:it` (build one safe unit with risk-routed review, fix
-  loops, and a final security gate) and `/ship:plan` (draft a step-structured
-  spec doc that `/ship:it` builds one shippable step at a time).
+  loops, and a final security gate), `/ship:plan` (draft a step-structured
+  spec doc that `/ship:it` builds one shippable step at a time), and
+  `/ship:flow` (experimental: the same pipeline on the Workflow runner —
+  deterministic fix loops whose agent results are journaled, so a stalled run
+  resumes from cache instead of going stale and needing a manual re-kick).
 - **Agents** — `ship:builder` (implements the work), `ship:recon` (read-only
   scout that bounds the builder's reads on large/unfamiliar files), and the
   reviewer panel: `ship:reviewer-rigorous`, `ship:reviewer-architect`,
@@ -109,6 +112,6 @@ machine-parseable `VERDICT: PASS|BLOCK (N blockers, M warnings)` line that
 
 ```text
 .claude-plugin/plugin.json   # plugin manifest (name: ship)
-commands/                    # it.md, plan.md           (auto-discovered → /ship:it, /ship:plan)
+commands/                    # it.md, plan.md, flow.md  (auto-discovered → /ship:it, /ship:plan, /ship:flow)
 agents/                      # builder + recon + reviewer-*  (auto-discovered)
 ```
