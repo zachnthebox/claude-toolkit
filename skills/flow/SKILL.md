@@ -1,12 +1,14 @@
 ---
+name: flow
 description: Experimental /ship:it variant on the Workflow runner — deterministic build/review/fix loops that resume from a journal instead of going stale
-argument-hint: [goal, or path to a spec doc with a "## Steps" section]
-allowed-tools: Read, Grep, Glob, Bash, Agent, Workflow, TaskStop, TaskOutput
-# This command commits, pushes, and opens PRs — deploy-class side effects.
-# Only the user decides when to ship; Claude must never auto-invoke it.
+argument-hint: 'goal, or path to a spec doc with a "## Steps" section'
 disable-model-invocation: true
 ---
 Goal: $ARGUMENTS
+
+"The argument" throughout this skill means the input you were invoked with —
+either a goal to ship (GOAL MODE), or a path to a spec doc containing a
+"## Steps" section (STEP MODE).
 
 This is the experimental Workflow-runner variant of `/ship:it`. The standard of
 done is identical — satisfied acceptance criteria, meaningful tests, reviewed

@@ -1,13 +1,14 @@
 ---
+name: it
 description: Build one safe unit with risk-routed review, fix loops, and a final security gate
-argument-hint: [goal, or path to a spec doc with a "## Steps" section]
-allowed-tools: Read, Grep, Glob, Bash, Agent
-model: inherit
-# This command commits, pushes, and opens PRs — deploy-class side effects.
-# Only the user decides when to ship; Claude must never auto-invoke it.
+argument-hint: 'goal, or path to a spec doc with a "## Steps" section'
 disable-model-invocation: true
 ---
 Goal: $ARGUMENTS
+
+"The argument" throughout this skill means the input you were invoked with —
+either a goal to ship (GOAL MODE), or a path to a spec doc containing a
+"## Steps" section (STEP MODE).
 
 Orchestrate the work; do not write feature code yourself. Use `builder` for all
 edits — reviewers never edit files, and the builder never reviews its own diff.
@@ -15,7 +16,7 @@ The standard of done is satisfied acceptance criteria, meaningful tests,
 reviewed code, green final checks, and the project's documented invariants
 intact (its `CLAUDE.md`, when it has one).
 
-This command and its agents ship together in the `ship` plugin, so the agents are
+This skill and its agents ship together in the `ship` plugin, so the agents are
 registered under that namespace. When you spawn one, pass the namespaced
 `subagent_type` — `ship:builder`, `ship:recon`, `ship:reviewer-rigorous`,
 `ship:reviewer-architect`, `ship:reviewer-frontend`, `ship:reviewer-minimalist`,
@@ -35,9 +36,9 @@ the visibility that lets the user follow what actually ran.
 ## Delegation mode: foreground, always
 
 Every `builder`/reviewer delegation below gates the very next instruction in
-this command — there is no point where the orchestrator has other useful work
+this skill — there is no point where the orchestrator has other useful work
 to do while one runs. Call `Agent` with `run_in_background: false` for every
-delegation in this command. Do not fall back to the tool's background default:
+delegation in this skill. Do not fall back to the tool's background default:
 that ends the orchestrator's turn to wait on a `task-notification`, and if that
 notification is missed, delayed, or the session isn't being watched when it
 arrives, the run reads as "stopped" rather than "waiting on an agent" — a human

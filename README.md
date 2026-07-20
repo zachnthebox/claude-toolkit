@@ -8,9 +8,9 @@ cloning it into your skills directory during environment setup.
 
 Plugin **`ship`**. Plugin components are namespaced by the plugin name, so you
 invoke everything as `ship:…` — a short, meaningful namespace that reads as a
-phrase with each command.
+phrase with each invocation.
 
-- **Commands** — `/ship:it` (build one safe unit with risk-routed review, fix
+- **Skills** — `/ship:it` (build one safe unit with risk-routed review, fix
   loops, and a final security gate), `/ship:plan` (draft a step-structured
   spec doc that `/ship:it` builds one shippable step at a time), and
   `/ship:flow` (experimental: the same pipeline on the Workflow runner —
@@ -21,11 +21,18 @@ phrase with each command.
   reviewer panel: `ship:reviewer-rigorous`, `ship:reviewer-architect`,
   `ship:reviewer-frontend`, `ship:reviewer-minimalist`, `ship:reviewer-security`.
 
+The entrypoints are **skills**, not plugin slash-commands. That's deliberate:
+Claude Code on the web surfaces a skills-dir plugin's *skills and agents* but
+not its `commands/`, so a `commands/*.md` entrypoint is invisible there while a
+skill loads on the web *and* the desktop/CLI. They stay user-invoke-only
+(`disable-model-invocation`) — only you trigger a deploy-class run; Claude never
+auto-fires one.
+
 ## Install (headless / setup script)
 
 Clone this repo into your skills directory. Claude Code auto-discovers any folder
 under `~/.claude/skills/` that has a `.claude-plugin/plugin.json` and loads it as
-a full plugin (`ship@skills-dir`) — commands and agents included — on the next
+a full plugin (`ship@skills-dir`) — skills and agents included — on the next
 session. No interactive `/plugin` command required.
 
 ```bash
@@ -36,7 +43,7 @@ Update later with a plain `git pull` in that directory.
 
 ### Optional: concise output everywhere
 
-The `ship` commands and agents already keep their own output lean. To apply the
+The `ship` skills and agents already keep their own output lean. To apply the
 same concise, outcome-first style to *every* Claude Code session — not just
 `ship:…` runs — append the stanza in
 [`examples/concise-style.md`](./examples/concise-style.md) to your personal
@@ -111,7 +118,7 @@ machine-parseable `VERDICT: PASS|BLOCK (N blockers, M warnings)` line that
 ## Layout
 
 ```text
-.claude-plugin/plugin.json   # plugin manifest (name: ship)
-commands/                    # it.md, plan.md, flow.md  (auto-discovered → /ship:it, /ship:plan, /ship:flow)
+.claude-plugin/plugin.json   # plugin manifest (name: ship, skills: it/plan/flow)
+skills/                      # it/, plan/, flow/ — each a SKILL.md → /ship:it, /ship:plan, /ship:flow
 agents/                      # builder + recon + reviewer-*  (auto-discovered)
 ```
