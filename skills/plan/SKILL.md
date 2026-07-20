@@ -1,12 +1,13 @@
 ---
-description: Draft a step-structured spec doc that `/ship:it` builds one shippable step at a time
-argument-hint: [feature or goal to plan]
-allowed-tools: Read, Grep, Glob, Bash, Agent
-model: inherit
-# Writes spec files into the project; the user decides when planning starts.
+name: plan
+description: Draft a step-structured spec doc that /ship:it builds one shippable step at a time
+argument-hint: 'feature or goal to plan'
 disable-model-invocation: true
 ---
 Goal to plan: $ARGUMENTS
+
+"The argument" throughout this skill means the input you were invoked with — the
+feature or goal to plan.
 
 Produce a spec doc in `docs/` that `/ship:it` can drive **one independently-shippable
 step at a time**. You are planning, not building — write no feature code.
