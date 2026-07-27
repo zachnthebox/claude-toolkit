@@ -10,16 +10,40 @@ Plugin **`ship`**. Plugin components are namespaced by the plugin name, so you
 invoke everything as `ship:…` — a short, meaningful namespace that reads as a
 phrase with each invocation.
 
-- **Skills** — `/ship:it` (build one safe unit with risk-routed review, fix
-  loops, and a final security gate), `/ship:plan` (draft a step-structured
-  spec doc that `/ship:it` builds one shippable step at a time), and
-  `/ship:flow` (experimental: the same pipeline on the Workflow runner —
-  deterministic fix loops whose agent results are journaled, so a stalled run
-  resumes from cache instead of going stale and needing a manual re-kick).
+- **Skills** — `/ship:flow` (the entrypoint: build, risk-routed review, fix
+  loops, security gate, push, PR, merge on green CI — then straight on to the
+  next step) and `/ship:plan` (draft a step-structured spec doc that
+  `/ship:flow` ships one step at a time).
 - **Agents** — `ship:builder` (implements the work), `ship:recon` (read-only
   scout that bounds the builder's reads on large/unfamiliar files), and the
   reviewer panel: `ship:reviewer-rigorous`, `ship:reviewer-architect`,
   `ship:reviewer-frontend`, `ship:reviewer-minimalist`, `ship:reviewer-security`.
+
+## How a run goes
+
+```text
+/ship:flow docs/my-feature.md
+```
+
+`/ship:flow` picks the first unshipped step, builds it with `ship:builder`,
+routes a reviewer panel at the diff, batches every blocker into one fix round,
+runs the security gate on the full PR diff, runs the project's verify gate,
+pushes, opens the PR, waits for CI, merges on green — then goes back for the
+next step. One invocation ships the whole plan.
+
+It runs unattended by design. It stops to ask only when proceeding would be
+unsafe under every reading: an ambiguous merge conflict, an unbuildable
+acceptance criterion, an unresolved security blocker, or an exhausted fix loop.
+CI failures and merge conflicts are its own to fix, not yours to triage.
+
+Append `--hold` to stop once the PR is open, or `--no-merge` to never merge.
+Both are opt-in; the default is to finish.
+
+The build/review/fix loop runs inside one `Workflow` script, so agent results
+are journaled — a hung run resumes from cache with `resumeFromRunId` instead of
+redoing hours of work. Where the `Workflow` runner is unavailable or its
+subagents can't execute tools, a preflight canary detects it in seconds and the
+same pipeline runs on plain `Agent` calls instead, without asking.
 
 The entrypoints are **skills**, not plugin slash-commands. That's deliberate:
 Claude Code on the web surfaces a skills-dir plugin's *skills and agents* but
@@ -68,7 +92,7 @@ single-plugin install:
 
 ## Per-project setup: the verify gate
 
-`/ship:it` is toolchain-agnostic. Its final build/lint/test gate does not assume
+`/ship:flow` is toolchain-agnostic. Its final build/lint/test gate does not assume
 `npm` (or any tool) — instead it runs a script the project provides:
 
 ```text
@@ -76,16 +100,19 @@ single-plugin install:
 ```
 
 That script is the project's single source of truth for a full build, lint, and
-test run. A non-zero exit blocks the push and feeds `/ship:it`'s builder/reviewer
-fix loop. Copy-paste starting points live in [`examples/`](./examples):
+test run. A non-zero exit blocks the push and feeds `/ship:flow`'s
+builder/reviewer fix loop. Copy-paste starting points live in
+[`examples/`](./examples):
 
 - [`examples/ship-verify.node.sh`](./examples/ship-verify.node.sh)
 - [`examples/ship-verify.ios.sh`](./examples/ship-verify.ios.sh)
 - [`examples/ship-verify.rust.sh`](./examples/ship-verify.rust.sh)
 
 Drop one into `.claude/hooks/ship-verify.sh`, `chmod +x`, and adjust for the
-project. If a project has no such script, `/ship:it` detects the conventional
-command or asks rather than guessing a toolchain.
+project. Without one, `/ship:flow` reads the repo's own CI workflow and runs what
+it runs on pull requests — that file is the project's real definition of green —
+falling back to the conventional command for whatever toolchain the manifest
+names. It asks only when nothing is detectable, and always reports what it ran.
 
 ## Portability note
 
@@ -96,7 +123,7 @@ code — and degrades gracefully when a file is absent (a missing `CLAUDE.md`
 never blocks a run or weakens the security gate). Two optional per-project
 hooks sharpen them further:
 
-- **Reviewer routing** — `/ship:it` routes reviewers from the diff itself
+- **Reviewer routing** — `/ship:flow` routes reviewers from the diff itself
   (paths touched, contracts changed, new dependencies). A project can override
   the default with its own routing contract (e.g.
   `review-corpus/review-matrix.md`, or a pointer in its `CLAUDE.md`); no such
@@ -106,19 +133,31 @@ hooks sharpen them further:
   conventions the code itself practices.
 - **Cross-run memory** — the builder and the correctness reviewer keep
   per-project notes (toolchain facts, recurring failure patterns) in
-  `.claude/agent-memory/` via `memory: project`. `/ship:it` treats those paths
+  `.claude/agent-memory/` via `memory: project`. `/ship:flow` treats those paths
   as expected and commits them with the work, so the knowledge survives
   ephemeral sessions and rides along in version control.
 
 All five reviewers share one output contract: findings as
 `[BLOCKER|WARNING][failure-class][confidence]` blocks, ending with a
-machine-parseable `VERDICT: PASS|BLOCK (N blockers, M warnings)` line that
-`/ship:it` routes on.
+machine-parseable `VERDICT: PASS|BLOCK|ABORT (N blockers, M warnings)` line that
+`/ship:flow` routes on. `ABORT` is the reviewer saying *this review did not
+happen* — no working tools, or a budget spent before any evidence landed. It
+exists so a reviewer that couldn't run can never be mistaken for one that found
+nothing, which is the failure mode that lets a broken run report a clean pass.
+
+Reviewers share the working tree with a committing builder, so they hold to two
+rules: nothing writes outside a throwaway `ship-probe/` at the repo root (the
+security and correctness reviewers may execute a probe when reading can't settle
+a question; both delete it before returning), and nothing ever stages with
+`git add -A`.
 
 ## Layout
 
 ```text
-.claude-plugin/plugin.json   # plugin manifest (name: ship, skills: it/plan/flow)
-skills/                      # it/, plan/, flow/ — each a SKILL.md → /ship:it, /ship:plan, /ship:flow
+.claude-plugin/plugin.json   # plugin manifest (name: ship, skills: flow/plan)
+skills/                      # flow/, plan/ — each a SKILL.md → /ship:flow, /ship:plan
 agents/                      # builder + recon + reviewer-*  (auto-discovered)
 ```
+
+`/ship:it` was retired in 0.4.0; `/ship:flow` is the single entrypoint, and its
+`Agent`-based fallback path carries what `it` did.
