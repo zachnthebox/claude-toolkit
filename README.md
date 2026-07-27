@@ -41,9 +41,16 @@ Both are opt-in; the default is to finish.
 
 The build/review/fix loop runs inside one `Workflow` script, so agent results
 are journaled — a hung run resumes from cache with `resumeFromRunId` instead of
-redoing hours of work. Where the `Workflow` runner is unavailable or its
-subagents can't execute tools, a preflight canary detects it in seconds and the
-same pipeline runs on plain `Agent` calls instead, without asking.
+redoing hours of work. If the `Workflow` runner is unavailable the launch itself
+fails; the subtler case is a runner whose subagents can't execute tools, which a
+preflight canary detects in seconds. Either way the same pipeline runs on plain
+`Agent` calls instead, without asking.
+
+Merging is gated on six conditions, and the last one is the one that matters
+most for an unattended run: the head being merged must be the exact SHA the
+review pipeline cleared. A CI fix, a conflict resolution, or an agent-memory
+commit lands after the reviewers went home, so each one re-runs the local gate
+and the security pass before the merge proceeds.
 
 The entrypoints are **skills**, not plugin slash-commands. That's deliberate:
 Claude Code on the web surfaces a skills-dir plugin's *skills and agents* but
@@ -144,12 +151,14 @@ machine-parseable `VERDICT: PASS|BLOCK|ABORT (N blockers, M warnings)` line that
 happen* — no working tools, or a budget spent before any evidence landed. It
 exists so a reviewer that couldn't run can never be mistaken for one that found
 nothing, which is the failure mode that lets a broken run report a clean pass.
+A `BLOCK` carrying no blocker-severity finding fails closed the same way: gating
+reads severities, so an incoherent verdict would otherwise sail through as clean.
 
 Reviewers share the working tree with a committing builder, so they hold to two
-rules: nothing writes outside a throwaway `ship-probe/` at the repo root (the
+rules: nothing writes outside `ship-probe/<reviewer>/` at the repo root (the
 security and correctness reviewers may execute a probe when reading can't settle
-a question; both delete it before returning), and nothing ever stages with
-`git add -A`.
+a question; each cleans up only its own directory, since the panel runs in
+parallel), and nothing ever stages with `git add -A`.
 
 ## Layout
 

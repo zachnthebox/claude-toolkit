@@ -71,7 +71,7 @@ first step whose Status is not `shipped`, merges its PR once CI is green, then
 continues to the next. Do not reorder steps after shipping starts.
 
 ### Step 1 — <short imperative title>
-- **Status:** not started   <!-- not started | in progress | shipped (#PR) -->
+- **Status:** not started   <!-- not started | in progress | shipped -->
 - **Depends on:** —          <!-- none, or step numbers that must merge first -->
 - **Acceptance:**
   - <concrete, independently verifiable outcome>

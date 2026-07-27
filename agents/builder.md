@@ -114,8 +114,13 @@ the scoped files, and only when the focused checks pass.
 
 When the task is one step from a `## Steps` spec doc: implement only that step,
 touch no later step, and flip the step's `Status:` line to `shipped` in the same
-commit (the orchestrator records the PR/branch). Running ahead into the next
-step is out of scope.
+commit. Write the bare word `shipped` — the PR number does not exist yet, and
+nothing writes it back later. Running ahead into the next step is out of scope.
+
+The plan doc is in scope for that commit even though it may also appear in
+`INITIAL_DIRTY_PATHS`; the orchestrator commits it before your run precisely so
+this is an ordinary edit to a tracked file. If it is still dirty when you start,
+that is the one dirty path you may stage — and only for the `Status:` line.
 
 ## Output contract
 

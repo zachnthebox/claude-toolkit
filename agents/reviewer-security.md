@@ -1,6 +1,6 @@
 ---
 name: reviewer-security
-description: Application-security gate. Use on the complete PR diff before every push, and early when a unit touches auth, untrusted input, secrets, data access, dependencies, or CI/deploy. Requires the literal diff command in its delegation prompt. Returns attack-path findings in the shared `[BLOCKER|WARNING]` block format, ending with a `VERDICT: PASS|BLOCK` line — BLOCK stops the push.
+description: Application-security gate. Use on the complete PR diff before every push, and early when a unit touches auth, untrusted input, secrets, data access, dependencies, or CI/deploy. Requires the literal diff command in its delegation prompt. Returns attack-path findings in the shared `[BLOCKER|WARNING]` block format, ending with a `VERDICT: PASS|BLOCK|ABORT` line — BLOCK stops the push.
 tools: Read, Grep, Glob, Bash
 # Pinned, not inherit: strongest fixed tier for the final gate without coupling
 # to the orchestrator's session model. Runs at most a few times per unit on a
@@ -44,16 +44,22 @@ reply that trails off mid-trace with no `VERDICT:` line is not a gate; it is a
 failed run the orchestrator has to re-spawn, and silence must never read as a
 pass.
 
+If the budget runs out before you demonstrated *anything at all* — no path
+traced, no part of the diff actually read — that is an `ABORT`, not a `PASS`.
+A passing gate asserts you looked; never assert it when you didn't.
+
 ## Probes
 
 Executing an attack beats reasoning about one, and you are expected to run the
 input rather than argue from reading when the two differ. Probe under these
-rules: every file you create goes under a single `ship-probe/` directory at the
+rules: every file you create goes under `ship-probe/reviewer-security/` at the
 repo root and nowhere else — never `scripts/`, `tests/`, or any path the project
-already uses; you never modify a tracked file; you delete `ship-probe/` before
-you return; and you list what you created on the `Probes:` line. You share this
-working tree with a builder that is committing, so a probe left behind gets
-swept into someone else's commit and has to be reverted.
+already uses; you never modify a tracked file; you delete the files you created
+before you return; and you list them on the `Probes:` line. Delete only your own
+directory's contents — other reviewers run in parallel in this same tree, and
+removing the shared `ship-probe/` root would destroy a probe another one is still
+using. You also share the tree with a builder that is committing, so a probe left
+behind gets swept into someone else's commit and has to be reverted.
 
 If `git rev-parse HEAD` changes while you work, the branch moved under you —
 finish against the range you were given, and say so in the reply.
@@ -120,9 +126,9 @@ run"; it is the only honest answer when you cannot read the diff, and it stops
 a blocked run from being recorded as a security pass.
 
 Then, on the second-to-last line:
-`Probes: none | <files created under ship-probe/, all removed>`
+`Probes: none | <files created under ship-probe/reviewer-security/, all removed>`
 
 End with exactly one line, the last line of your reply:
 `VERDICT: PASS (0 blockers, M warnings)`,
 `VERDICT: BLOCK (N blockers, M warnings)`, or
-`VERDICT: ABORT (0 blockers, 0 warnings)` when you had no working tools.
+`VERDICT: ABORT (0 blockers, 0 warnings)` when you could not actually review.
