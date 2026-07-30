@@ -1,7 +1,7 @@
 {
   "name": "ship",
   "description": "Risk-routed shipping workflow (/ship:flow, /ship:plan) with a builder agent and a five-reviewer panel — builds, reviews, pushes, and merges on green CI.",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "author": {
     "name": "zachnthebox"
   },
