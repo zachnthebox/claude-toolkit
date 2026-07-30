@@ -142,7 +142,10 @@ hooks sharpen them further:
   per-project notes (toolchain facts, recurring failure patterns) in
   `.claude/agent-memory/` via `memory: project`. `/ship:flow` treats those paths
   as expected and commits them with the work, so the knowledge survives
-  ephemeral sessions and rides along in version control.
+  ephemeral sessions and rides along in version control. Memory is injected at
+  spawn, so consulting it costs nothing; on `/ship:flow`'s turn-capped review
+  runs the reviewer skips memory upkeep entirely — landing the verdict outranks
+  taking notes.
 
 All five reviewers share one output contract: findings as
 `[BLOCKER|WARNING][failure-class][confidence]` blocks, ending with a

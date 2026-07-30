@@ -488,7 +488,7 @@ function reviewPrompt(name, diffCmd, extra) {
     'ACCEPTANCE CHECKLIST:\n' + args.checklist,
     extra || '',
     'Report every finding in the structured output, including its proof requirement. severity BLOCKER only with a concrete code path, observable failure/attack, complete fix, and proof. verdict is BLOCK only when at least one BLOCKER stands — a BLOCK with no BLOCKER-severity finding is treated as a failed review, not a pass.',
-    'Reserve your last turn for the structured output — a run that ends mid-investigation returns nothing usable. If you cannot execute tools at all, or your budget runs out before you demonstrated anything, set verdict ABORT with the reason in abortReason rather than reporting a review you did not perform.',
+    'Reserve your last turn for the structured output — a run that ends mid-investigation returns nothing usable. Skip agent-memory upkeep on this run: never read or write `.claude/agent-memory/**` — any memory you have is already injected, and a finished review that dies in a memory chore at the turn cap is thrown away and re-spawned from scratch. If you cannot execute tools at all, or your budget runs out before you demonstrated anything, set verdict ABORT with the reason in abortReason rather than reporting a review you did not perform.',
     'Scratch files: only if your own contract permits probes, and then only under ship-probe/' + name + '/ at the repo root, deleted before you return and reported in probeFiles. Other reviewers work in this same tree — never touch a path outside your own probe directory.',
   ].filter(Boolean).join('\n\n')
 }
@@ -778,8 +778,10 @@ history, no files you read, no earlier agent's output. Restate everything:
 - **Reviewer packet** — the literal diff command with both endpoints resolved to
   SHAs you looked up (`git diff <BASELINE>...<HEAD_SHA>`, never a shell variable,
   never symbolic `HEAD`, never "the current changes"); the acceptance checklist;
-  the manifest fields in that reviewer's lane. A reviewer never chooses its own
-  range.
+  the manifest fields in that reviewer's lane; and the same memory rule the
+  workflow path sends — skip agent-memory upkeep this run, `.claude/agent-memory/**`
+  neither read nor written, with the `VERDICT:` line as the final message. A
+  reviewer never chooses its own range.
 
 **Validate every reply against its contract, immediately.** A reply with no
 final `VERDICT:` line is not a review; a `VERDICT: BLOCK` carrying no `[BLOCKER]`
