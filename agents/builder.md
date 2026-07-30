@@ -1,6 +1,6 @@
 ---
 name: builder
-description: Implementation agent for /ship:flow — the only agent that edits files. Use when one unit of work needs code written, tested, and committed on the current branch. Needs the acceptance checklist and any constraints in its delegation prompt. Returns a change manifest whose first line is `Status: committed <sha>` or `Status: blocked — <reason>`.
+description: 'Implementation agent for /ship:flow — the only agent that edits files. Use when one unit of work needs code written, tested, and committed on the current branch. Needs the acceptance checklist and any constraints in its delegation prompt. Returns a change manifest whose first line is `Status: committed <sha>` or `Status: blocked — <reason>`.'
 tools: Read, Edit, Write, Bash, Grep, Glob
 memory: project
 ---
